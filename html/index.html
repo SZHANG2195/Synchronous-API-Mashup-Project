@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Soundtrack Finder</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
+
+        :root {
+            --bg: #0e0e0e;
+            --surface: #161616;
+            --surface2: #1e1e1e;
+            --border: #2a2a2a;
+            --accent: #c8ff00;
+            --text: #e8e8e8;
+            --muted: #666;
+            --tag-bg: #1e1e1e;
+            --tag-active: #c8ff00;
+            --tag-active-text: #0e0e0e;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'IBM Plex Sans', sans-serif;
+            min-height: 100vh;
+            padding: 48px 24px;
+        }
+
+        .wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 48px;
+        }
+
+        header h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 3.5rem;
+            letter-spacing: 0.04em;
+            color: var(--accent);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: var(--muted);
+            font-size: 0.9rem;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        .section {
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            background: var(--surface);
+            padding: 10px 16px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-body {
+            padding: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        /* Checkbox toggle buttons */
+        .tag input[type="checkbox"],
+        .tag input[type="radio"] {
+            display: none;
+        }
+
+        .tag label {
+            display: inline-block;
+            padding: 6px 14px;
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            font-size: 0.82rem;
+            color: var(--text);
+            background: var(--tag-bg);
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s, color 0.15s;
+            user-select: none;
+            font-family: 'IBM Plex Sans', sans-serif;
+        }
+
+        .tag input:checked + label {
+            background: var(--tag-active);
+            color: var(--tag-active-text);
+            border-color: var(--tag-active);
+            font-weight: 600;
+        }
+
+        .tag label:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .tag input:checked + label:hover {
+            color: var(--tag-active-text);
+        }
+
+        /* Rating slider section */
+        .rating-body {
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .rating-inputs {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .rating-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .rating-field label {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .rating-field input[type="number"] {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            color: var(--text);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1rem;
+            padding: 8px 12px;
+            width: 90px;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .rating-field input[type="number"]:focus {
+            border-color: var(--accent);
+        }
+
+        .rating-separator {
+            color: var(--muted);
+            font-family: 'IBM Plex Mono', monospace;
+            margin-top: 20px;
+        }
+
+        /* Interactive Container Positioning Wrapper */
+        .slider-container {
+            position: relative;
+            width: 100%;
+            height: 20px;
+            margin-top: 10px;
+        }
+
+        .slider-track {
+            position: absolute;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            top: 8px;
+            width: 100%;
+            z-index: 1;
+        }
+
+        .slider-fill {
+            position: absolute;
+            height: 100%;
+            background: var(--accent);
+            border-radius: 2px;
+            transition: left 0.05s, width 0.05s;
+        }
+
+        .slider-row {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .slider-row input[type="range"] {
+            position: absolute;
+            width: 100%;
+            height: 20px;
+            top: 0;
+            appearance: none;
+            background: transparent;
+            pointer-events: none;
+            outline: none;
+        }
+
+        /* Scoped pointer event bindings to re-enable thumb dragging */
+        .slider-row input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: 2px solid var(--bg);
+            pointer-events: auto;
+            cursor: pointer;
+            transition: transform 0.15s;
+            margin-top: 2px;
+        }
+
+        .slider-row input[type="range"]::-moz-range-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: 2px solid var(--bg);
+            pointer-events: auto;
+            cursor: pointer;
+            transition: transform 0.15s;
+        }
+
+        .slider-row input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .slider-row input[type="range"]::-moz-range-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--muted);
+            margin-top: 24px;
+        }
+
+        /* Submit button */
+        .submit-wrap {
+            text-align: center;
+        }
+
+        input[type="submit"] {
+            background: var(--accent);
+            color: #0e0e0e;
+            border: none;
+            padding: 14px 48px;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.3rem;
+            letter-spacing: 0.1em;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: opacity 0.15s, transform 0.1s;
+        }
+
+        input[type="submit"]:hover {
+            opacity: 0.88;
+            transform: translateY(-1px);
+        }
+
+        .hint {
+            margin-top: 10px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+            <h1>Game Soundtrack Finder</h1>
+            <p>Select filters → find the top rated game → explore its soundtrack on Discogs</p>
+        </header>
+
+        <form action="search" method="get">
+
+            <!-- GENRE -->
+            <div class="section">
+                <div class="section-header">Genre — select one or more</div>
+                <div class="section-body">
+                    <span class="tag"><input type="checkbox" id="g1" name="genre" value="Pinball"><label for="g1">Pinball</label></span>
+                    <span class="tag"><input type="checkbox" id="g2" name="genre" value="Adventure"><label for="g2">Adventure</label></span>
+                    <span class="tag"><input type="checkbox" id="g3" name="genre" value="Indie"><label for="g3">Indie</label></span>
+                    <span class="tag"><input type="checkbox" id="g4" name="genre" value="Arcade"><label for="g4">Arcade</label></span>
+                    <span class="tag"><input type="checkbox" id="g5" name="genre" value="Visual Novel"><label for="g5">Visual Novel</label></span>
+                    <span class="tag"><input type="checkbox" id="g6" name="genre" value="Card &amp; Board Game"><label for="g6">Card &amp; Board Game</label></span>
+                    <span class="tag"><input type="checkbox" id="g7" name="genre" value="MOBA"><label for="g7">MOBA</label></span>
+                    <span class="tag"><input type="checkbox" id="g8" name="genre" value="Point-and-click"><label for="g8">Point-and-click</label></span>
+                    <span class="tag"><input type="checkbox" id="g9" name="genre" value="Fighting"><label for="g9">Fighting</label></span>
+                    <span class="tag"><input type="checkbox" id="g10" name="genre" value="Shooter"><label for="g10">Shooter</label></span>
+                    <span class="tag"><input type="checkbox" id="g11" name="genre" value="Music"><label for="g11">Music</label></span>
+                    <span class="tag"><input type="checkbox" id="g12" name="genre" value="Platform"><label for="g12">Platform</label></span>
+                    <span class="tag"><input type="checkbox" id="g13" name="genre" value="Puzzle"><label for="g13">Puzzle</label></span>
+                    <span class="tag"><input type="checkbox" id="g14" name="genre" value="Racing"><label for="g14">Racing</label></span>
+                    <span class="tag"><input type="checkbox" id="g15" name="genre" value="Real Time Strategy (RTS)"><label for="g15">Real Time Strategy (RTS)</label></span>
+                    <span class="tag"><input type="checkbox" id="g16" name="genre" value="Role-playing (RPG)"><label for="g16">Role-playing (RPG)</label></span>
+                    <span class="tag"><input type="checkbox" id="g17" name="genre" value="Simulator"><label for="g17">Simulator</label></span>
+                    <span class="tag"><input type="checkbox" id="g18" name="genre" value="Sport"><label for="g18">Sport</label></span>
+                    <span class="tag"><input type="checkbox" id="g19" name="genre" value="Strategy"><label for="g19">Strategy</label></span>
+                    <span class="tag"><input type="checkbox" id="g20" name="genre" value="Turn-based strategy (TBS)"><label for="g20">Turn-based strategy (TBS)</label></span>
+                    <span class="tag"><input type="checkbox" id="g21" name="genre" value="Tactical"><label for="g21">Tactical</label></span>
+                    <span class="tag"><input type="checkbox" id="g22" name="genre" value="Hack and slash/Beat &#39;em up"><label for="g22">Hack and slash/Beat 'em up</label></span>
+                    <span class="tag"><input type="checkbox" id="g23" name="genre" value="Quiz/Trivia"><label for="g23">Quiz/Trivia</label></span>
+                </div>
+            </div>
+
+            <!-- PLATFORM -->
+            <div class="section">
+                <div class="section-header">Platform — select one or more</div>
+                <div class="section-body">
+                    <span class="tag"><input type="checkbox" id="p1" name="platform" value="14"><label for="p1">Mac</label></span>
+                    <span class="tag"><input type="checkbox" id="p2" name="platform" value="6"><label for="p2">PC (Microsoft Windows)</label></span>
+                    <span class="tag"><input type="checkbox" id="p3" name="platform" value="3"><label for="p3">Linux</label></span>
+                    <span class="tag"><input type="checkbox" id="p4" name="platform" value="167"><label for="p4">PlayStation 5</label></span>
+                    <span class="tag"><input type="checkbox" id="p5" name="platform" value="169"><label for="p5">Xbox Series X|S</label></span>
+                    <span class="tag"><input type="checkbox" id="p6" name="platform" value="49"><label for="p6">Xbox One</label></span>
+                    <span class="tag"><input type="checkbox" id="p7" name="platform" value="48"><label for="p7">PlayStation 4</label></span>
+                    <span class="tag"><input type="checkbox" id="p8" name="platform" value="130"><label for="p8">Nintendo Switch</label></span>
+                    <span class="tag"><input type="checkbox" id="p9" name="platform" value="9"><label for="p9">PlayStation 3</label></span>
+                    <span class="tag"><input type="checkbox" id="p12" name="platform" value="12"><label for="p12">Xbox 360</label></span>
+                </div>
+            </div>
+
+            <!-- GAME MODE -->
+            <div class="section">
+                <div class="section-header">Game Mode — select one or more</div>
+                <div class="section-body">
+                    <span class="tag"><input type="checkbox" id="m1" name="mode" value="1"><label for="m1">Single player</label></span>
+                    <span class="tag"><input type="checkbox" id="m2" name="mode" value="2"><label for="m2">Multiplayer</label></span>
+                    <span class="tag"><input type="checkbox" id="m3" name="mode" value="3"><label for="m3">Co-operative</label></span>
+                    <span class="tag"><input type="checkbox" id="m4" name="mode" value="4"><label for="m4">Split screen</label></span>
+                    <span class="tag"><input type="checkbox" id="m5" name="mode" value="5"><label for="m5">Massively Multiplayer Online (MMO)</label></span>
+                    <span class="tag"><input type="checkbox" id="m6" name="mode" value="6"><label for="m6">Battle Royale</label></span>
+                </div>
+            </div>
+
+            <!-- RATING -->
+            <div class="section">
+                <div class="section-header">Rating Range</div>
+                <div class="rating-body">
+                    <div class="rating-inputs">
+                        <div class="rating-field">
+                            <label for="rating_min">Minimum</label>
+                            <input type="number" id="rating_min" name="rating_min" min="0" max="100" value="0">
+                        </div>
+                        <div class="rating-separator">—</div>
+                        <div class="rating-field">
+                            <label for="rating_max">Maximum</label>
+                            <input type="number" id="rating_max" name="rating_max" min="0" max="100" value="100">
+                        </div>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-track">
+                            <div class="slider-fill" id="slider_fill"></div>
+                        </div>
+                        <div class="slider-row">
+                            <input type="range" id="range_min" min="0" max="100" value="0" step="1">
+                            <input type="range" id="range_max" min="0" max="100" value="100" step="1">
+                        </div>
+                    </div>
+                    
+                    <div class="slider-labels"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div>
+                </div>
+            </div>
+
+            <div class="submit-wrap">
+                <input type="submit" value="Find Soundtrack">
+                <p class="hint">Select at least one filter to search</p>
+            </div>
+
+        </form>
+    </div>
+
+    <script>
+        const rangeMin = document.getElementById('range_min');
+        const rangeMax = document.getElementById('range_max');
+        const numMin = document.getElementById('rating_min');
+        const numMax = document.getElementById('rating_max');
+        const fill = document.getElementById('slider_fill');
+
+        function updateSlider() {
+            const min = parseInt(rangeMin.value);
+            const max = parseInt(rangeMax.value);
+            fill.style.left = min + '%';
+            fill.style.width = (max - min) + '%';
+            numMin.value = min;
+            numMax.value = max;
+        }
+
+        function updateFromNumbers() {
+            let min = Math.min(parseInt(numMin.value) || 0, 100);
+            let max = Math.min(parseInt(numMax.value) || 100, 100);
+            min = Math.max(min, 0);
+            max = Math.max(max, min);
+            rangeMin.value = min;
+            rangeMax.value = max;
+            updateSlider();
+        }
+
+        rangeMin.addEventListener('input', () => {
+            if (parseInt(rangeMin.value) > parseInt(rangeMax.value)) rangeMin.value = rangeMax.value;
+            updateSlider();
+        });
+
+        rangeMax.addEventListener('input', () => {
+            if (parseInt(rangeMax.value) < parseInt(rangeMin.value)) rangeMax.value = rangeMin.value;
+            updateSlider();
+        });
+
+        numMin.addEventListener('input', updateFromNumbers);
+        numMax.addEventListener('input', updateFromNumbers);
+
+        updateSlider();
+    </script>
+</body>
+</html>

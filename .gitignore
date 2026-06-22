@@ -1,0 +1,4 @@
+auth/credentials.json
+node_modules/
+cache/
+.env
