@@ -143,6 +143,10 @@ function get_igdb_data(genres, platforms, modes, min_rating, max_rating, res) {
     const query = `fields name,rating,summary,cover.url,genres.name;\n${where_clause}\nsort rating desc;\nlimit 1;`;
 
     console.log("Query sent as: \n" + query + "\n");
+	
+	if (!fs.existsSync("./cache")) {
+    fs.mkdirSync("./cache");
+	}
 
     const igdb_cache_path = "./cache/igdb_cache.json";
     if (fs.existsSync(igdb_cache_path)) {
